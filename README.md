@@ -1,1 +1,1 @@
-# stanford-cs231n
+Assignments for audit of Stanford CS231n: Deep Learning for Computer Vision
