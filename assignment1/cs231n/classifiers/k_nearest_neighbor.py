@@ -95,7 +95,10 @@ class KNearestNeighbor(object):
             # points, and store the result in dists[i, :].                        #
             # Do not use np.linalg.norm().                                        #
             #######################################################################
-            pass
+
+          
+            dists[i, :] = np.sqrt(np.sum((self.X_train - X[i]) ** 2, axis=1))
+
         return dists
 
     def compute_distances_no_loops(self, X):
@@ -122,6 +125,11 @@ class KNearestNeighbor(object):
         #       and two broadcast sums.                                         #
         #########################################################################
 
+        X_square = np.sum(X ** 2, axis=1, keepdims=True)
+        X_train_square = np.sum(self.X_train ** 2, axis=1)
+        cross = X @ self.X_train.T
+
+        dists = np.sqrt(X_square + X_train_square - 2 * cross)
         return dists
 
     def predict_labels(self, dists, k=1):
