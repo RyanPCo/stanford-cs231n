@@ -287,6 +287,20 @@ class TransformerDecoderLayer(nn.Module):
         # same structure as self-attention implemented just above.                 #
         ############################################################################
 
+        # Cross Attention
+        shortcut = tgt
+        tgt = self.cross_attn(query=tgt, key=memory, value=memory, attn_mask=None)
+        tgt = self.dropout_cross(tgt)
+        tgt = tgt + shortcut
+        tgt = self.norm_cross(tgt)
+
+        # Feedforward
+        shortcut = tgt
+        tgt = self.ffn(tgt)
+        tgt = self.dropout_ffn(tgt)
+        tgt = tgt + shortcut
+        tgt = self.norm_ffn(tgt)
+
         ############################################################################
         #                             END OF YOUR CODE                             #
         ############################################################################
@@ -335,7 +349,6 @@ class PatchEmbedding(nn.Module):
         N, C, H, W = x.shape
         assert H == self.img_size and W == self.img_size, \
             f"Expected image size ({self.img_size}, {self.img_size}), but got ({H}, {W})"
-        out = torch.zeros(N, self.embed_dim)
 
         ############################################################################
         # TODO: Divide the image into non-overlapping patches of shape             #
@@ -345,6 +358,15 @@ class PatchEmbedding(nn.Module):
         # step. Once the patches are flattened, embed them into latent vectors     #
         # using the projection layer.                                              #
         ############################################################################
+        
+        Hp = self.img_size // self.patch_size
+        Wp = self.img_size // self.patch_size
+
+        x = x.reshape(N, C, Hp, self.patch_size, Wp, self.patch_size)
+        x = x.permute(0, 2, 4, 1, 3, 5)
+        x = x.reshape(N, self.num_patches, self.patch_dim)
+
+        out = self.proj(x)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
@@ -393,6 +415,20 @@ class TransformerEncoderLayer(nn.Module):
         # TODO: Implement the encoder layer by applying self-attention followed    #
         # by a feedforward block. This code will be very similar to decoder layer. #
         ############################################################################
+
+        # Self-attention block
+        shortcut = src
+        src = self.self_attn(query=src, key=src, value=src, attn_mask=src_mask)
+        src = self.dropout_self(src)
+        src = src + shortcut
+        src = self.norm_self(src)
+
+        # Feedforward
+        shortcut = src
+        src = self.ffn(src)
+        src = self.dropout_ffn(src)
+        src = src + shortcut
+        src = self.norm_ffn(src)
 
         ############################################################################
         #                             END OF YOUR CODE                             #
